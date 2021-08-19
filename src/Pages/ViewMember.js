@@ -4,6 +4,7 @@ import { db } from "../Firebase";
 
 const ViewMember = () => {
   const [member, setMember] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const unsubscribe = db.collection("members").onSnapshot((snapshot) => {
@@ -19,23 +20,56 @@ const ViewMember = () => {
     db.collection("members").doc(id).delete();
   };
 
+  const sorthandler = (value) => {
+    const arr = [...member];
+    console.log(value);
+    arr.sort((a, b) => {
+      if (a.data[value].toLowerCase() < b.data[value].toLowerCase()) {
+        return -1;
+      }
+      if (a.data[value].toLowerCase() > b.data[value].toLowerCase()) {
+        return 1;
+      }
+      return 0;
+    });
+    setMember(arr);
+  };
+
+  const searchHandler = (array) => {
+    if (searchTerm === "") return array;
+
+    const keys = array[0] && Object.keys(array[0].data);
+    return array.filter(({ data }) =>
+      keys.some(
+        (key) => data[key].toLowerCase().indexOf(searchTerm.toLowerCase()) > -1
+      )
+    );
+  };
+
   return (
     <div className="view__member">
+      <div className="search__box">
+        <input
+          type="text"
+          placeholder="Search by First Name, Last Name, Job title, Company Name"
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
       <table className="view__member__table">
         <thead>
           <tr>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Infix</th>
-            <th>Job Title</th>
-            <th>Company Name</th>
+            <th onClick={() => sorthandler("firstName")}>First Name</th>
+            <th onClick={() => sorthandler("lastName")}>Last Name</th>
+            <th onClick={() => sorthandler("infix")}>Infix</th>
+            <th onClick={() => sorthandler("jobTitle")}>Job Title</th>
+            <th onClick={() => sorthandler("companyName")}>Company Name</th>
             <th>View</th>
             <th>Edit</th>
             <th>Delete</th>
           </tr>
         </thead>
         <tbody>
-          {member.map(({ id, data }, i) => (
+          {searchHandler(member).map(({ id, data }, i) => (
             <tr key={id}>
               <td>{data.firstName}</td>
               <td>{data.lastName}</td>
